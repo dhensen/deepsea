@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html"
 	"log"
@@ -11,7 +12,15 @@ import (
 	mux "github.com/gorilla/mux"
 )
 
+var kubeconfig *string
+
 func main() {
+	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	flag.Parse()
+	if *kubeconfig == "" {
+		panic("-kubeconfig not specified")
+	}
+
 	router := mux.NewRouter()
 	router.HandleFunc("/", Index)
 
@@ -21,6 +30,7 @@ func main() {
 	s.Methods("POST").HandlerFunc(BuyDomain)
 
 	router.HandleFunc("/container_presets", ListContainerPresets).Methods("GET")
+	router.HandleFunc("/container", AddContainer).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
