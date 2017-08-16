@@ -73,14 +73,14 @@ func ListDomains(w http.ResponseWriter, r *http.Request) {
 
 // BuyDomain buys a requested domain via a given domain provider
 func BuyDomain(w http.ResponseWriter, r *http.Request) {
-	domain_provider := r.FormValue("domain_provider")
-	domain_name := r.FormValue("domain_name")
+	domainProvider := r.FormValue("domainProvider")
+	domainName := r.FormValue("domainName")
 
 	// TODO: create a Transip domain provider that wraps a transip api client
-	log.Printf("Buying domain_name %s via domain_provider %s", domain_name, domain_provider)
+	log.Printf("Buying domainName %s via domainProvider %s", domainName, domainProvider)
 
 	// Fake it 'till you make it!
-	json.NewEncoder(w).Encode(Domain{ID: uuid.New(), Name: domain_name, Provider: domain_provider})
+	json.NewEncoder(w).Encode(Domain{ID: uuid.New(), Name: domainName, Provider: domainProvider})
 }
 
 type ImagePreset struct {

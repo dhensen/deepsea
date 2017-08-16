@@ -18,11 +18,11 @@ import (
 
 func AddContainer(w http.ResponseWriter, r *http.Request) {
 
-	preset_id := r.FormValue("preset_id")
-	imagePreset := imagePresets[preset_id]
-	dns_label := fmt.Sprintf("wordpress-%s", uuid.New().String())
+	presetId := r.FormValue("preset_id")
+	imagePreset := imagePresets[presetId]
+	dnsLabel := fmt.Sprintf("wordpress-%s", uuid.New().String())
 
-	// I'm using the dns_label for:
+	// I'm using the dnsLabel for:
 	// 1. .metadata.name
 	// 2. .metadata.labels.app
 	// 3. .spec.template.spec.containers.name
@@ -30,21 +30,21 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 
 	deployment := &appsv1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dns_label,
+			Name: dnsLabel,
 		},
 		Spec: appsv1beta1.DeploymentSpec{
 			Replicas: int32Ptr(1),
 			Template: apiv1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"run":     dns_label,
+						"run":     dnsLabel,
 						"deepsea": "v0",
 					},
 				},
 				Spec: apiv1.PodSpec{
 					Containers: []apiv1.Container{
 						{
-							Name:  dns_label,
+							Name:  dnsLabel,
 							Image: imagePreset.Image,
 							Ports: []apiv1.ContainerPort{
 								{
@@ -55,7 +55,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 							Env: []apiv1.EnvVar{
 								{
 									Name:  "WORDPRESS_TABLE_PREFIX",
-									Value: strings.Replace(dns_label, "-", "_", -1),
+									Value: strings.Replace(dnsLabel, "-", "_", -1),
 								},
 								{
 									Name:  "WORDPRESS_DB_HOST",
@@ -90,7 +90,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 
 	service := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dns_label,
+			Name: dnsLabel,
 			Labels: map[string]string{
 				"deepsea": "v0",
 			},
@@ -104,7 +104,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 			Selector: map[string]string{
-				"run": dns_label,
+				"run": dnsLabel,
 			},
 		},
 	}
@@ -118,7 +118,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 
 	ingress := &extensionsv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dns_label,
+			Name: dnsLabel,
 			Labels: map[string]string{
 				"deepsea": "v0",
 			},
@@ -126,14 +126,14 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 		Spec: extensionsv1beta1.IngressSpec{
 			Rules: []extensionsv1beta1.IngressRule{
 				{
-					Host: fmt.Sprintf("%s.local", dns_label),
+					Host: fmt.Sprintf("%s.local", dnsLabel),
 					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
 						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
 							Paths: []extensionsv1beta1.HTTPIngressPath{
 								{
 									Path: "/",
 									Backend: extensionsv1beta1.IngressBackend{
-										ServiceName: dns_label,
+										ServiceName: dnsLabel,
 										ServicePort: util.FromInt(80),
 									},
 								},
