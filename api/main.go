@@ -77,15 +77,13 @@ type ImagePreset struct {
 	ID          uuid.UUID
 	DisplayName string
 	Image       string
-	Tag         string
 }
 
 var imagePresets = map[string]ImagePreset{
 	"a8ef3baa-6fbd-4a9b-ad94-247c9273c57d": ImagePreset{
 		ID:          uuid.Must(uuid.Parse("a8ef3baa-6fbd-4a9b-ad94-247c9273c57d")),
 		DisplayName: "Wordpress 4.8.1 running PHP 5.6 on Apache",
-		Image:       "wordpress",
-		Tag:         "4.8.1-php5.6-apache",
+		Image:       "wordpress:4.8.1-php5.6-apache",
 	},
 }
 
