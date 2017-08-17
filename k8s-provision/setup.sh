@@ -20,3 +20,8 @@ kubectl create -f haproxy-ingress.yaml
 kubectl expose deploy/haproxy-ingress --type=NodePort
 
 kubectl create -f mysql.yaml
+
+# For the PV we need to create the /data/volumes folder and own it
+# Everything inside /data is persisted across minikube reboot.
+# Beware: ofcourse this does not scale and PV uses hostPath is only for development purposes
+minikube ssh "sudo mkdir -p /data/volumes && sudo chown -R docker:docker /data/volumes"
