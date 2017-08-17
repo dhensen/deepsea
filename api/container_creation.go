@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os/exec"
 	"strings"
 
 	uuid "github.com/google/uuid"
-
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -20,9 +20,17 @@ import (
 
 func AddContainer(w http.ResponseWriter, r *http.Request) {
 
-	presetId := r.FormValue("preset_id")
-	imagePreset := imagePresets[presetId]
-	dnsLabel := fmt.Sprintf("wordpress-%s", uuid.New().String())
+	presetID := r.FormValue("preset_id")
+	domainName := r.FormValue("domain_name")
+
+	domain := Domain{
+		ID:       uuid.New(),
+		Name:     domainName,
+		Provider: "k8s-dev",
+	}
+
+	imagePreset := imagePresets[presetID]
+	dnsLabel := strings.Replace(domainName, ".", "-", -1)
 
 	// I'm using the dnsLabel for:
 	// 1. .metadata.name
@@ -66,7 +74,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("Service created succesfully!")
 
-	ingress := CreateIngress(dnsLabel, fmt.Sprintf("%s.local", dnsLabel), dnsLabel)
+	ingress := CreateIngress(dnsLabel, domainName, dnsLabel)
 	ingressClient := clientset.ExtensionsV1beta1().Ingresses(apiv1.NamespaceDefault)
 	fmt.Println("Creating Ingress...")
 	_, err = ingressClient.Create(ingress)
@@ -74,6 +82,8 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	fmt.Println("Ingress created succesfully!")
+
+	json.NewEncoder(w).Encode(domain)
 }
 
 func getClientSet() *kubernetes.Clientset {
@@ -240,7 +250,7 @@ func CreateService(metadataName string, runSelectorValue string) *apiv1.Service 
 	}
 }
 
-func CreateIngress(metadataName string, hostname string, serviceName string) *extensionsv1beta1.Ingress {
+func CreateIngress(metadataName string, domainName string, serviceName string) *extensionsv1beta1.Ingress {
 	return &extensionsv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: metadataName,
@@ -251,7 +261,7 @@ func CreateIngress(metadataName string, hostname string, serviceName string) *ex
 		Spec: extensionsv1beta1.IngressSpec{
 			Rules: []extensionsv1beta1.IngressRule{
 				{
-					Host: hostname,
+					Host: domainName,
 					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
 						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
 							Paths: []extensionsv1beta1.HTTPIngressPath{
