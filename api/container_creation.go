@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os/exec"
 	"strings"
 
 	uuid "github.com/google/uuid"
@@ -10,8 +11,9 @@ import (
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	util "k8s.io/apimachinery/pkg/util/intstr"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
 	kubernetes "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -28,129 +30,50 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	// 3. .spec.template.spec.containers.name
 	// TODO: properly differentiate these three vars
 
-	deployment := &appsv1beta1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: dnsLabel,
-		},
-		Spec: appsv1beta1.DeploymentSpec{
-			Replicas: int32Ptr(1),
-			Template: apiv1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"run":     dnsLabel,
-						"deepsea": "v0",
-					},
-				},
-				Spec: apiv1.PodSpec{
-					Containers: []apiv1.Container{
-						{
-							Name:  dnsLabel,
-							Image: imagePreset.Image,
-							Ports: []apiv1.ContainerPort{
-								{
-									Protocol:      apiv1.ProtocolTCP,
-									ContainerPort: 80,
-								},
-							},
-							Env: []apiv1.EnvVar{
-								{
-									Name:  "WORDPRESS_TABLE_PREFIX",
-									Value: strings.Replace(dnsLabel, "-", "_", -1),
-								},
-								{
-									Name:  "WORDPRESS_DB_HOST",
-									Value: "mysql-1",
-								},
-								{
-									Name:  "WORDPRESS_DB_USER",
-									Value: "root",
-								},
-								{
-									Name:  "WORDPRESS_DB_PASSWORD",
-									Value: "root",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
 	clientset := getClientSet()
-	deploymentsClient := clientset.AppsV1beta1().Deployments(apiv1.NamespaceDefault)
 
-	fmt.Println("Creating deployment...")
-	_, err := deploymentsClient.Create(deployment)
+	persistentVolume := CreatePersistentVolume(dnsLabel)
+	volumeClient := clientset.CoreV1().PersistentVolumes()
+	_, err := volumeClient.Create(persistentVolume)
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: expose deployment => create service
-
-	service := &apiv1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: dnsLabel,
-			Labels: map[string]string{
-				"deepsea": "v0",
-			},
-		},
-		Spec: apiv1.ServiceSpec{
-			Ports: []apiv1.ServicePort{
-				{
-					Port:       80,
-					Protocol:   apiv1.ProtocolTCP,
-					TargetPort: util.FromInt(80),
-				},
-			},
-			Selector: map[string]string{
-				"run": dnsLabel,
-			},
-		},
+	persistentVolumeClaim := CreatePersistentVolumeClaim(dnsLabel)
+	volumeClaimClient := clientset.CoreV1().PersistentVolumeClaims(apiv1.NamespaceDefault)
+	_, err = volumeClaimClient.Create(persistentVolumeClaim)
+	if err != nil {
+		panic(err)
 	}
 
+	deployment := CreateDeployment(imagePreset.Image, dnsLabel, dnsLabel, dnsLabel, dnsLabel)
+
+	deploymentsClient := clientset.AppsV1beta1().Deployments(apiv1.NamespaceDefault)
+
+	fmt.Println("Creating deployment...")
+	_, err = deploymentsClient.Create(deployment)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Deployment created succesfully!")
+
+	service := CreateService(dnsLabel, dnsLabel)
 	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
 	fmt.Println("Creating Service...")
 	_, err = serviceClient.Create(service)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Service created succesfully!")
 
-	ingress := &extensionsv1beta1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: dnsLabel,
-			Labels: map[string]string{
-				"deepsea": "v0",
-			},
-		},
-		Spec: extensionsv1beta1.IngressSpec{
-			Rules: []extensionsv1beta1.IngressRule{
-				{
-					Host: fmt.Sprintf("%s.local", dnsLabel),
-					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
-						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
-							Paths: []extensionsv1beta1.HTTPIngressPath{
-								{
-									Path: "/",
-									Backend: extensionsv1beta1.IngressBackend{
-										ServiceName: dnsLabel,
-										ServicePort: util.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
+	ingress := CreateIngress(dnsLabel, fmt.Sprintf("%s.local", dnsLabel), dnsLabel)
 	ingressClient := clientset.ExtensionsV1beta1().Ingresses(apiv1.NamespaceDefault)
 	fmt.Println("Creating Ingress...")
 	_, err = ingressClient.Create(ingress)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Ingress created succesfully!")
 }
 
 func getClientSet() *kubernetes.Clientset {
@@ -166,3 +89,184 @@ func getClientSet() *kubernetes.Clientset {
 }
 
 func int32Ptr(i int32) *int32 { return &i }
+
+func CreatePersistentVolume(volumeName string) *apiv1.PersistentVolume {
+	hostPath := fmt.Sprintf("/data/volumes/%s", volumeName)
+
+	// Call mkdir hostPath via ssh in minikube
+	cmd := exec.Command("/usr/local/bin/minikube", "ssh", fmt.Sprintf("mkdir -pv %s", hostPath))
+	out, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s", out)
+	// TODO: handle failure
+
+	return &apiv1.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: volumeName,
+			Labels: map[string]string{
+				"deepsea": "v0",
+			},
+		},
+		Spec: apiv1.PersistentVolumeSpec{
+			StorageClassName: "manual",
+			AccessModes: []apiv1.PersistentVolumeAccessMode{
+				apiv1.ReadWriteOnce,
+			},
+			Capacity: apiv1.ResourceList{
+				apiv1.ResourceStorage: resource.MustParse("500Mi"),
+			},
+			PersistentVolumeSource: apiv1.PersistentVolumeSource{
+				HostPath: &apiv1.HostPathVolumeSource{
+					Path: hostPath,
+				},
+			},
+		},
+	}
+}
+
+func CreatePersistentVolumeClaim(pvcName string) *apiv1.PersistentVolumeClaim {
+	storageClassName := "manual"
+	storageClassPointer := &storageClassName
+	return &apiv1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pvcName,
+			Labels: map[string]string{
+				"deepsea": "v0",
+			},
+		},
+		Spec: apiv1.PersistentVolumeClaimSpec{
+			StorageClassName: storageClassPointer,
+			AccessModes: []apiv1.PersistentVolumeAccessMode{
+				apiv1.ReadWriteOnce,
+			},
+			Resources: apiv1.ResourceRequirements{
+				Requests: apiv1.ResourceList{
+					apiv1.ResourceStorage: resource.MustParse("500Mi"),
+				},
+			},
+		},
+	}
+}
+
+func CreateDeployment(image string, metadataName string, runLabelValue string, containerName string, pvcName string) *appsv1beta1.Deployment {
+	return &appsv1beta1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: metadataName,
+		},
+		Spec: appsv1beta1.DeploymentSpec{
+			Replicas: int32Ptr(1),
+			Template: apiv1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"run":     runLabelValue,
+						"deepsea": "v0",
+					},
+				},
+				Spec: apiv1.PodSpec{
+					Containers: []apiv1.Container{
+						{
+							Name:  containerName,
+							Image: image,
+							Ports: []apiv1.ContainerPort{
+								{
+									Protocol:      apiv1.ProtocolTCP,
+									ContainerPort: 80,
+								},
+							},
+							Env: []apiv1.EnvVar{
+								{
+									Name:  "WORDPRESS_TABLE_PREFIX",
+									Value: strings.Replace(metadataName, "-", "_", -1),
+								},
+								{
+									Name:  "WORDPRESS_DB_HOST",
+									Value: "mysql-1",
+								},
+								{
+									Name:  "WORDPRESS_DB_USER",
+									Value: "root",
+								},
+								{
+									Name:  "WORDPRESS_DB_PASSWORD",
+									Value: "root",
+								},
+							},
+							VolumeMounts: []apiv1.VolumeMount{
+								{
+									MountPath: "/var/www/html",
+									Name:      pvcName,
+								},
+							},
+						},
+					},
+					Volumes: []apiv1.Volume{
+						{
+							Name: pvcName,
+							VolumeSource: apiv1.VolumeSource{
+								PersistentVolumeClaim: &apiv1.PersistentVolumeClaimVolumeSource{
+									ClaimName: pvcName,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func CreateService(metadataName string, runSelectorValue string) *apiv1.Service {
+	return &apiv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: metadataName,
+			Labels: map[string]string{
+				"deepsea": "v0",
+			},
+		},
+		Spec: apiv1.ServiceSpec{
+			Ports: []apiv1.ServicePort{
+				{
+					Port:       80,
+					Protocol:   apiv1.ProtocolTCP,
+					TargetPort: intstr.FromInt(80),
+				},
+			},
+			Selector: map[string]string{
+				"run": runSelectorValue,
+			},
+		},
+	}
+}
+
+func CreateIngress(metadataName string, hostname string, serviceName string) *extensionsv1beta1.Ingress {
+	return &extensionsv1beta1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: metadataName,
+			Labels: map[string]string{
+				"deepsea": "v0",
+			},
+		},
+		Spec: extensionsv1beta1.IngressSpec{
+			Rules: []extensionsv1beta1.IngressRule{
+				{
+					Host: hostname,
+					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
+						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
+							Paths: []extensionsv1beta1.HTTPIngressPath{
+								{
+									Path: "/",
+									Backend: extensionsv1beta1.IngressBackend{
+										ServiceName: serviceName,
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
