@@ -18,3 +18,5 @@ kubectl create configmap haproxy-ingress
 kubectl create -f haproxy-ingress.yaml
 
 kubectl expose deploy/haproxy-ingress --type=NodePort
+
+kubectl create -f mysql.yaml
