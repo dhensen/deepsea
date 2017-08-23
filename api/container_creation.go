@@ -24,10 +24,23 @@ func ListContainers(w http.ResponseWriter, r *http.Request) {
 
 func AddContainer(w http.ResponseWriter, r *http.Request) {
 
-	// TODO: preset_id and domain_name are required
 	// TODO:  preset_id must be valid
 	presetID := r.FormValue("preset_id")
+	if presetID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "preset_id is required",
+		})
+		return
+	}
 	domainName := r.FormValue("domain_name")
+	if domainName == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "domain_name is required",
+		})
+		return
+	}
 
 	domain := Domain{
 		ID:       uuid.New(),
