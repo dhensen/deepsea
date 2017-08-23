@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"html"
 	"log"
 	"net/http"
 
-	uuid "github.com/google/uuid"
 	mux "github.com/gorilla/mux"
 )
 
@@ -21,87 +19,36 @@ func main() {
 		panic("-kubeconfig not specified")
 	}
 
-	router := mux.NewRouter()
-	router.HandleFunc("/", Index)
+	r := mux.NewRouter()
+	r.HandleFunc("/", Index)
 
-	// Domains
-	s := router.PathPrefix("/domains").Subrouter()
+	dir := "static"
+	// This will serve files under http://localhost:8000/static/<filename>
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(dir))))
+
+	// Domain endpoints
+	s := r.PathPrefix("/domains").Subrouter()
 	s.Methods("GET").HandlerFunc(ListDomains)
 	s.Methods("POST").HandlerFunc(BuyDomain)
 
-	router.HandleFunc("/container_presets", ListContainerPresets).Methods("GET")
-	router.HandleFunc("/container", AddContainer).Methods("POST")
+	// List container presets
+	r.HandleFunc("/container-presets", ListContainerPresets).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	// Container endpoints
+	s = r.PathPrefix("/containers").Subrouter()
+	r.HandleFunc("/containers", AddContainer).Methods("POST")
+	r.HandleFunc("/containers", ListContainers).Methods("GET")
+
+	// Backups
+	s = r.PathPrefix("/backups").Subrouter()
+	r.HandleFunc("/backups/{id:[0-9]+}", ListBackups).Methods("GET")
+	// Pass in a webhook to callback when backup is created
+	r.HandleFunc("/backups", CreateBackup).Methods("POST")
+
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-type Organisation struct {
-	ID   uuid.UUID
-	Name string
-}
-
-type User struct {
-	ID   uuid.UUID
-	Name string
-}
-
-type Domain struct {
-	ID       uuid.UUID
-	Name     string
-	Provider string
-}
-
-type Domains []Domain
-
-type DomainProvider struct {
-	ID   uuid.UUID
-	Name string
-}
-
+// Home "/" handler
 func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-}
-
-func ListDomains(w http.ResponseWriter, r *http.Request) {
-	domains := Domains{
-		Domain{Name: "dinohensen.nl", Provider: "transip"},
-		Domain{Name: "ebrandlocal.com", Provider: "transip"},
-	}
-
-	json.NewEncoder(w).Encode(domains)
-}
-
-// BuyDomain buys a requested domain via a given domain provider
-func BuyDomain(w http.ResponseWriter, r *http.Request) {
-	domainProvider := r.FormValue("domainProvider")
-	domainName := r.FormValue("domainName")
-
-	// TODO: create a Transip domain provider that wraps a transip api client
-	log.Printf("Buying domainName %s via domainProvider %s", domainName, domainProvider)
-
-	// Fake it 'till you make it!
-	json.NewEncoder(w).Encode(Domain{ID: uuid.New(), Name: domainName, Provider: domainProvider})
-}
-
-type ImagePreset struct {
-	ID          uuid.UUID
-	DisplayName string
-	Image       string
-}
-
-var imagePresets = map[string]ImagePreset{
-	"a8ef3baa-6fbd-4a9b-ad94-247c9273c57d": ImagePreset{
-		ID:          uuid.Must(uuid.Parse("a8ef3baa-6fbd-4a9b-ad94-247c9273c57d")),
-		DisplayName: "Wordpress 4.8.1 running PHP 5.6 on Apache",
-		Image:       "wordpress:4.8.1-php5.6-apache",
-	},
-	"1c98846e-b60e-47bc-a1ca-707057ee70b8": ImagePreset{
-		ID:          uuid.Must(uuid.Parse("1c98846e-b60e-47bc-a1ca-707057ee70b8")),
-		DisplayName: "Wordpress 4.8.1 running PHP 7.1 on Apache",
-		Image:       "wordpress:4.8.1-php7.1-apache",
-	},
-}
-
-func ListContainerPresets(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(imagePresets)
 }

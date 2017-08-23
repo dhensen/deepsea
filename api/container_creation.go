@@ -18,8 +18,14 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+func ListContainers(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func AddContainer(w http.ResponseWriter, r *http.Request) {
 
+	// TODO: preset_id and domain_name are required
+	// TODO:  preset_id must be valid
 	presetID := r.FormValue("preset_id")
 	domainName := r.FormValue("domain_name")
 
