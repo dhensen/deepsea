@@ -8,8 +8,9 @@ type Organisation struct {
 }
 
 type User struct {
-	ID   uuid.UUID
-	Name string
+	ID       uuid.UUID
+	Name     string
+	Password string
 }
 
 type Domain struct {

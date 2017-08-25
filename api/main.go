@@ -26,6 +26,9 @@ func main() {
 	// This will serve files under http://localhost:8000/static/<filename>
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(dir))))
 
+	// Login
+	r.HandleFunc("/login", LoginHandler).Methods("POST")
+
 	// Domain endpoints
 	s := r.PathPrefix("/domains").Subrouter()
 	s.Methods("GET").HandlerFunc(ListDomains)
@@ -36,15 +39,16 @@ func main() {
 
 	// Container endpoints
 	s = r.PathPrefix("/containers").Subrouter()
-	r.HandleFunc("/containers", AddContainer).Methods("POST")
-	r.HandleFunc("/containers", ListContainers).Methods("GET")
+	s.HandleFunc("/", AddContainer).Methods("POST")
+	s.HandleFunc("/", ListContainers).Methods("GET")
 
 	// Backups
 	s = r.PathPrefix("/backups").Subrouter()
-	r.HandleFunc("/backups/{id:[0-9]+}", ListBackups).Methods("GET")
+	s.HandleFunc("/{id:[0-9]+}", ListBackups).Methods("GET")
 	// Pass in a webhook to callback when backup is created
-	r.HandleFunc("/backups", CreateBackup).Methods("POST")
+	s.HandleFunc("/", CreateBackup).Methods("POST")
 
+	log.Println("Starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 

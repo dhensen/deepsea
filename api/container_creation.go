@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -77,30 +78,30 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 
 	deploymentsClient := clientset.AppsV1beta1().Deployments(apiv1.NamespaceDefault)
 
-	fmt.Println("Creating deployment...")
+	log.Println("Creating deployment...")
 	_, err = deploymentsClient.Create(deployment)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Deployment created succesfully!")
+	log.Println("Deployment created succesfully!")
 
 	service := CreateService(dnsLabel, dnsLabel)
 	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
-	fmt.Println("Creating Service...")
+	log.Println("Creating Service...")
 	_, err = serviceClient.Create(service)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Service created succesfully!")
+	log.Println("Service created succesfully!")
 
 	ingress := CreateIngress(dnsLabel, domainName, dnsLabel)
 	ingressClient := clientset.ExtensionsV1beta1().Ingresses(apiv1.NamespaceDefault)
-	fmt.Println("Creating Ingress...")
+	log.Println("Creating Ingress...")
 	_, err = ingressClient.Create(ingress)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Ingress created succesfully!")
+	log.Println("Ingress created succesfully!")
 
 	json.NewEncoder(w).Encode(domain)
 }
@@ -128,7 +129,7 @@ func CreatePersistentVolume(volumeName string) *apiv1.PersistentVolume {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%s", out)
+	log.Printf("%s", out)
 	// TODO: handle failure
 
 	return &apiv1.PersistentVolume{
