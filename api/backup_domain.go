@@ -14,5 +14,6 @@ func ListBackups(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateBackup(w http.ResponseWriter, r *http.Request) {
-
+	// Pass in a webhook to callback when backup is created
+	fmt.Fprint(w, "creating backup")
 }

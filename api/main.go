@@ -39,14 +39,13 @@ func main() {
 
 	// Container endpoints
 	s = r.PathPrefix("/containers").Subrouter()
-	s.HandleFunc("/", AddContainer).Methods("POST")
-	s.HandleFunc("/", ListContainers).Methods("GET")
+	s.Methods("POST").HandlerFunc(AddContainer)
+	s.Methods("GET").HandlerFunc(ListContainers)
 
 	// Backups
 	s = r.PathPrefix("/backups").Subrouter()
 	s.HandleFunc("/{id:[0-9]+}", ListBackups).Methods("GET")
-	// Pass in a webhook to callback when backup is created
-	s.HandleFunc("/", CreateBackup).Methods("POST")
+	s.Methods("POST").HandlerFunc(CreateBackup)
 
 	log.Println("Starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
