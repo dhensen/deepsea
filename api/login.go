@@ -82,7 +82,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			tokenCookie := &http.Cookie{
-				Name:     "access_token",
+				Name:     jwtCookieKey,
 				Value:    tokenString,
 				Expires:  time.Now().Add(7 * 24 * time.Hour),
 				Secure:   false,
@@ -92,8 +92,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 			// logged in
 			json.NewEncoder(w).Encode(map[string]string{
-				"message":      "you are logged in dude",
-				"access_token": tokenString,
+				"message":    "you are logged in dude",
+				jwtCookieKey: tokenString,
 			})
 			return
 		}
@@ -108,4 +108,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "wrong username or password",
 	})
 	return
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	tokenCookie := &http.Cookie{
+		Name:     jwtCookieKey,
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		Secure:   false,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, tokenCookie)
 }

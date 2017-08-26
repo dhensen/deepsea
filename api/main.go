@@ -30,10 +30,13 @@ func main() {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(dir))))
 
 	// Login
-	r.HandleFunc("/login", LoginHandler).Methods("POST")
+	s := r.PathPrefix("/login").Subrouter()
+	s.Methods("GET").HandlerFunc(Login)
+	s.Methods("POST").HandlerFunc(LoginHandler)
+	r.HandleFunc("/logout", Logout)
 
 	// Domain endpoints
-	s := r.PathPrefix("/domains").Subrouter()
+	s = r.PathPrefix("/domains").Subrouter()
 	s.Methods("GET").HandlerFunc(Authenticated(ListDomains))
 	s.Methods("POST").HandlerFunc(Authenticated(BuyDomain))
 
