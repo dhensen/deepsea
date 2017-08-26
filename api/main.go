@@ -2,8 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"html"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -69,5 +68,12 @@ func GetJWTMiddleware() *jwtmiddleware.JWTMiddleware {
 
 // Home "/" handler
 func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	t, _ := template.ParseFiles("templates/index.html")
+	t.Execute(w, nil)
+}
+
+// Home "/login" handler
+func Login(w http.ResponseWriter, r *http.Request) {
+	t, _ := template.ParseFiles("templates/login.html")
+	t.Execute(w, nil)
 }
