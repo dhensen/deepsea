@@ -43,8 +43,8 @@ func main() {
 	s.Methods("GET").HandlerFunc(ListContainers)
 
 	// Backups
-	s = r.PathPrefix("/backups").Subrouter()
-	s.HandleFunc("/{id:[0-9]+}", ListBackups).Methods("GET")
+	s = r.PathPrefix("/backups/{id:[0-9]+}").Subrouter()
+	s.Methods("GET").HandlerFunc(Authenticated(ListBackups))
 	s.Methods("POST").HandlerFunc(CreateBackup)
 
 	log.Println("Starting server on port 8080")
@@ -54,4 +54,11 @@ func main() {
 // Home "/" handler
 func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+}
+
+func Authenticated(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		f(w, r)
+	}
 }
