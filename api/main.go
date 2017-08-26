@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
+
+	"github.com/auth0/go-jwt-middleware"
 	mux "github.com/gorilla/mux"
 )
 
@@ -31,34 +34,37 @@ func main() {
 
 	// Domain endpoints
 	s := r.PathPrefix("/domains").Subrouter()
-	s.Methods("GET").HandlerFunc(ListDomains)
-	s.Methods("POST").HandlerFunc(BuyDomain)
+	s.Methods("GET").HandlerFunc(Authenticated(ListDomains))
+	s.Methods("POST").HandlerFunc(Authenticated(BuyDomain))
 
 	// List container presets
-	r.HandleFunc("/container-presets", ListContainerPresets).Methods("GET")
+	r.HandleFunc("/container-presets", Authenticated(ListContainerPresets)).Methods("GET")
 
 	// Container endpoints
 	s = r.PathPrefix("/containers").Subrouter()
-	s.Methods("POST").HandlerFunc(AddContainer)
-	s.Methods("GET").HandlerFunc(ListContainers)
+	s.Methods("POST").HandlerFunc(Authenticated(AddContainer))
+	s.Methods("GET").HandlerFunc(Authenticated(ListContainers))
 
 	// Backups
 	s = r.PathPrefix("/backups/{id:[0-9]+}").Subrouter()
 	s.Methods("GET").HandlerFunc(Authenticated(ListBackups))
-	s.Methods("POST").HandlerFunc(CreateBackup)
+	s.Methods("POST").HandlerFunc(Authenticated(CreateBackup))
 
 	log.Println("Starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
+func GetJWTMiddleware() *jwtmiddleware.JWTMiddleware {
+	return jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
+		},
+		SigningMethod: jwt.SigningMethodHS256,
+		Extractor:     CookieExtractor(jwtCookieKey),
+	})
+}
+
 // Home "/" handler
 func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-}
-
-func Authenticated(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		f(w, r)
-	}
 }
