@@ -92,7 +92,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 			// logged in
 			json.NewEncoder(w).Encode(map[string]string{
-				"message":    "you are logged in dude",
+				"message":    "login successful",
 				jwtCookieKey: tokenString,
 			})
 			return

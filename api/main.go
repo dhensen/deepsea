@@ -72,8 +72,33 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, nil)
 }
 
+// HasValidJwtToken returns true if the request has a valid JWT token, false otherwise
+// Code based on jwtmiddleware.CheckJWT implementation
+func HasValidJwtToken(r *http.Request) bool {
+	m := GetJWTMiddleware()
+	token, err := m.Options.Extractor(r)
+	if err != nil {
+		return false
+	}
+	parsedToken, err := jwt.Parse(token, m.Options.ValidationKeyGetter)
+	if err != nil {
+		return false
+	}
+
+	if m.Options.SigningMethod != nil && m.Options.SigningMethod.Alg() != parsedToken.Header["alg"] {
+		return false
+	}
+
+	return parsedToken.Valid
+}
+
 // Home "/login" handler
 func Login(w http.ResponseWriter, r *http.Request) {
+	if HasValidJwtToken(r) {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
 	t, _ := template.ParseFiles("templates/login.html")
 	t.Execute(w, nil)
 }
