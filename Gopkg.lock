@@ -14,10 +14,22 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/auth0/go-jwt-middleware"
+  packages = ["."]
+  revision = "5493cabe49f7bfa6e2ec444a09d334d90cd4e2bd"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
+  version = "v3.0.0"
 
 [[projects]]
   name = "github.com/emicklei/go-restful"
@@ -202,6 +214,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6739a4a0e119e48ad6bbbe3e03738e9d97462c900f684e6951462bf8c7c48b11"
+  inputs-digest = "74abb06bf1ea2853d3fb85f46fccc48aa5fc9c223c0a29722ae4797a9daa59d0"
   solver-name = "gps-cdcl"
   solver-version = 1
