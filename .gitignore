@@ -1,5 +1,6 @@
 build
 vendor
+docker_mysql_volume
 
 # Binaries for programs and plugins
 *.exe

@@ -8,9 +8,10 @@ type Organisation struct {
 }
 
 type User struct {
-	ID       uuid.UUID `json:"id"`
-	Name     string    `json:"name"`
-	Password string    `json:"password"`
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	Password   string    `json:"password"`
+	AccessType string    `json:"access_type"`
 }
 
 type Domain struct {
