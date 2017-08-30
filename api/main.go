@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -58,8 +61,12 @@ func main() {
 	s.Methods("GET").HandlerFunc(Authenticated(ListBackups))
 	s.Methods("POST").HandlerFunc(Authenticated(CreateBackup))
 
-	log.Println("Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	var apiPort int64 = 8080
+	if value, exists := os.LookupEnv("PORT"); exists {
+		apiPort, _ = strconv.ParseInt(value, 10, 0)
+	}
+	log.Println(fmt.Sprintf("Starting server on port %d", apiPort))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", apiPort), r))
 }
 
 func GetJWTMiddleware() *jwtmiddleware.JWTMiddleware {
