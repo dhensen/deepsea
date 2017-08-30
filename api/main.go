@@ -34,6 +34,12 @@ func main() {
 	s.Methods("POST").HandlerFunc(LoginHandler)
 	r.HandleFunc("/logout", Logout)
 
+	s = r.PathPrefix("/clients").Subrouter()
+	s.Methods("Get").HandlerFunc(GetClients)
+	s.Methods("Post").HandlerFunc(PostClient)
+	s.Methods("Delete").HandlerFunc(DeleteClient)
+	s.Methods("Put").HandlerFunc(PutClient)
+
 	// Domain endpoints
 	s = r.PathPrefix("/domains").Subrouter()
 	s.Methods("GET").HandlerFunc(Authenticated(ListDomains))

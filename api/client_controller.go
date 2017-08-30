@@ -35,41 +35,12 @@ func init() {
 	db.AutoMigrate(&Client{}, &Company{})
 }
 
-func main() {
-	mux := http.NewServeMux()
-	mux.Handle("/client", ClientsHandler())
-	log.Fatal(http.ListenAndServe(":8081", mux))
-}
-
 func getDB() *gorm.DB {
 	db, err := gorm.Open("mysql", "root:deepsea@tcp(localhost:3307)/test_deepsea?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
 		panic(err)
 	}
 	return db
-}
-
-func ClientsHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodHead:
-			fallthrough
-		case http.MethodGet:
-			GetClients(w, r)
-		case http.MethodPost:
-			PostClient(w, r)
-		case http.MethodDelete:
-			DeleteClient(w, r)
-		case http.MethodPut:
-			PutClient(w, r)
-		default:
-			MethodNotAllowed(w, r)
-		}
-	})
-}
-
-func MethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
 func GetClients(w http.ResponseWriter, r *http.Request) {
