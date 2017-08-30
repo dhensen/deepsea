@@ -2,11 +2,6 @@ package main
 
 import uuid "github.com/google/uuid"
 
-type Organisation struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
-}
-
 type User struct {
 	ID         uuid.UUID `json:"id"`
 	Name       string    `json:"name"`
