@@ -1,17 +1,19 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
 	"log"
 	"net/http"
 
+	"local/deepsea/api/models"
+
 	uuid "github.com/google/uuid"
 )
 
 func ListDomains(w http.ResponseWriter, r *http.Request) {
-	domains := Domains{
-		Domain{Name: "dinohensen.nl", Provider: "transip"},
-		Domain{Name: "ebrandlocal.com", Provider: "transip"},
+	domains := models.Domains{
+		models.Domain{Name: "dinohensen.nl", Provider: "transip"},
+		models.Domain{Name: "ebrandlocal.com", Provider: "transip"},
 	}
 
 	json.NewEncoder(w).Encode(domains)
@@ -26,5 +28,5 @@ func BuyDomain(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Buying domainName %s via domainProvider %s", domainName, domainProvider)
 
 	// Fake it 'till you make it!
-	json.NewEncoder(w).Encode(Domain{UUID: uuid.New(), Name: domainName, Provider: domainProvider})
+	json.NewEncoder(w).Encode(models.Domain{UUID: uuid.New(), Name: domainName, Provider: domainProvider})
 }

@@ -1,7 +1,8 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
+	"local/deepsea/api/models"
 	"log"
 	"net/http"
 
@@ -13,7 +14,7 @@ var db *gorm.DB
 
 func init() {
 	db = getDB()
-	db.AutoMigrate(&Client{}, &Company{})
+	db.AutoMigrate(&models.Client{}, &models.Company{})
 }
 
 func getDB() *gorm.DB {
@@ -28,7 +29,7 @@ func GetClients(w http.ResponseWriter, r *http.Request) {
 	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	var clients []Client
+	var clients []models.Client
 	db.Find(&clients)
 
 	json.NewEncoder(w).Encode(clients)
@@ -46,13 +47,13 @@ func PostClient(w http.ResponseWriter, r *http.Request) {
 	companyName := r.PostFormValue("companyName")
 	kvkNumber := r.PostFormValue("kvkNumber")
 
-	var company Company
-	db.FirstOrCreate(&company, Company{
+	var company models.Company
+	db.FirstOrCreate(&company, models.Company{
 		Name:      companyName,
 		KvkNumber: kvkNumber,
 	})
 
-	client := Client{
+	client := models.Client{
 		FirstName:    firstName,
 		LastName:     lastName,
 		EmailAddress: emailAddress,
@@ -60,7 +61,7 @@ func PostClient(w http.ResponseWriter, r *http.Request) {
 		Postcode:     postcode,
 		Address:      address,
 		PhoneNumber:  phoneNumber,
-		Companies:    []Company{company},
+		Companies:    []models.Company{company},
 	}
 
 	db.Create(&client)

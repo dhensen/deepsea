@@ -1,8 +1,10 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"local/deepsea/api/models"
 	"log"
 	"net/http"
 	"os/exec"
@@ -18,6 +20,16 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+var kubeconfig *string
+
+func init() {
+	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	flag.Parse()
+	if *kubeconfig == "" {
+		panic("-kubeconfig not specified")
+	}
+}
 
 func ListContainers(w http.ResponseWriter, r *http.Request) {
 
@@ -43,7 +55,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	domain := Domain{
+	domain := models.Domain{
 		UUID:     uuid.New(),
 		Name:     domainName,
 		Provider: "k8s-dev",

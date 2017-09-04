@@ -1,7 +1,8 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
+	"local/deepsea/api/models"
 	"log"
 	"net/http"
 	"time"
@@ -12,6 +13,16 @@ import (
 
 const jwtSecret = "superfoobar9000"
 const jwtCookieKey = "access_token"
+
+func getJWTMiddleware() *jwtmiddleware.JWTMiddleware {
+	return jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
+		},
+		SigningMethod: jwt.SigningMethodHS256,
+		Extractor:     CookieExtractor(jwtCookieKey),
+	})
+}
 
 func CookieExtractor(jwtKey string) jwtmiddleware.TokenExtractor {
 	return func(r *http.Request) (string, error) {
@@ -25,7 +36,7 @@ func CookieExtractor(jwtKey string) jwtmiddleware.TokenExtractor {
 
 func Authenticated(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		jwtMiddleware := GetJWTMiddleware()
+		jwtMiddleware := getJWTMiddleware()
 		err := jwtMiddleware.CheckJWT(w, r)
 
 		// If there was an error, do not continue.
@@ -37,8 +48,8 @@ func Authenticated(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 	}
 }
 
-var users_storage = map[string]User{
-	"dhensen": User{
+var users_storage = map[string]models.User{
+	"dhensen": models.User{
 		Name:     "dhensen",
 		Password: "1234",
 	},
