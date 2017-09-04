@@ -44,7 +44,16 @@ var users_storage = map[string]User{
 	},
 }
 
+func CorsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO put this in a decorator
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 

@@ -9,25 +9,6 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-type Company struct {
-	gorm.Model
-	Clients   []Client `gorm:"many2many:company_clients;"`
-	Name      string
-	KvkNumber string
-}
-
-type Client struct {
-	gorm.Model
-	FirstName    string
-	LastName     string
-	EmailAddress string `gorm:"not null;unique"`
-	City         string
-	Postcode     string
-	Address      string
-	PhoneNumber  string
-	Companies    []Company `gorm:"many2many:company_clients;"`
-}
-
 var db *gorm.DB
 
 func init() {
@@ -44,10 +25,12 @@ func getDB() *gorm.DB {
 }
 
 func GetClients(w http.ResponseWriter, r *http.Request) {
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
 	var clients []Client
 	db.Find(&clients)
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(clients)
 }
 
@@ -63,10 +46,11 @@ func PostClient(w http.ResponseWriter, r *http.Request) {
 	companyName := r.PostFormValue("companyName")
 	kvkNumber := r.PostFormValue("kvkNumber")
 
-	company := Company{
+	var company Company
+	db.FirstOrCreate(&company, Company{
 		Name:      companyName,
 		KvkNumber: kvkNumber,
-	}
+	})
 
 	client := Client{
 		FirstName:    firstName,
@@ -99,5 +83,10 @@ func PutClient(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteClient(w http.ResponseWriter, r *http.Request) {
+	// Prerequisites:
+	// 1. all resources used by clients must be deleted
+	// 2. all outstanding invoices must be payed by client
+	// 3. contract duration is expired OR contract is paid off
+	// When all prerequisites are met, soft delete the client
 	json.NewEncoder(w).Encode("not implemened yet")
 }

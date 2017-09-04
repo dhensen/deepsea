@@ -12,7 +12,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/auth0/go-jwt-middleware"
-	mux "github.com/gorilla/mux"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 var kubeconfig *string
@@ -33,15 +34,18 @@ func main() {
 
 	// Login
 	s := r.PathPrefix("/login").Subrouter()
+	// s.Methods("OPTIONS").HandlerFunc(CorsHandler)
 	s.Methods("GET").HandlerFunc(Login)
 	s.Methods("POST").HandlerFunc(LoginHandler)
 	r.HandleFunc("/logout", Logout)
 
+	// Client endpoints
 	s = r.PathPrefix("/clients").Subrouter()
-	s.Methods("Get").HandlerFunc(GetClients)
-	s.Methods("Post").HandlerFunc(PostClient)
-	s.Methods("Delete").HandlerFunc(DeleteClient)
-	s.Methods("Put").HandlerFunc(PutClient)
+	// s.Methods("OPTIONS").HandlerFunc(CorsHandler)
+	s.Methods("GET").HandlerFunc(GetClients)
+	s.Methods("POST").HandlerFunc(PostClient)
+	s.Methods("DELETE").HandlerFunc(DeleteClient)
+	s.Methods("PUT").HandlerFunc(PutClient)
 
 	// Domain endpoints
 	s = r.PathPrefix("/domains").Subrouter()
@@ -66,7 +70,7 @@ func main() {
 		apiPort, _ = strconv.ParseInt(value, 10, 0)
 	}
 	log.Println(fmt.Sprintf("Starting server on port %d", apiPort))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", apiPort), r))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", apiPort), handlers.CORS()(r)))
 }
 
 func GetJWTMiddleware() *jwtmiddleware.JWTMiddleware {
