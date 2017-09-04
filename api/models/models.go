@@ -1,47 +1,65 @@
 package models
 
 import (
-	uuid "github.com/google/uuid"
-	"github.com/jinzhu/gorm"
+	"time"
 )
 
 type User struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	Password   string    `json:"password"`
-	AccessType string    `json:"access_type"`
+	ID         uint       `json:"id" gorm:"primary_key"`
+	UUID       string     `json:"uuid"`
+	Name       string     `json:"name"`
+	Password   string     `json:"password"`
+	AccessType string     `json:"access_type"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	DeletedAt  *time.Time `json:"deleted_at" sql:"index"`
 }
 
 type Company struct {
-	gorm.Model
-	Clients   []Client `gorm:"many2many:company_clients;"`
-	Name      string
-	KvkNumber string
+	ID        uint       `json:"id" gorm:"primary_key"`
+	UUID      string     `json:"uuid"`
+	Clients   []Client   `json:"clients" gorm:"many2many:company_clients;"`
+	Name      string     `json:"name"`
+	KvkNumber string     `json:"kvk_number"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
 }
 
 type Client struct {
-	gorm.Model
-	FirstName    string
-	LastName     string
-	EmailAddress string `gorm:"not null;unique"`
-	City         string
-	Postcode     string
-	Address      string
-	PhoneNumber  string
-	Companies    []Company `gorm:"many2many:company_clients;"`
-	Domains      Domains
+	ID           uint       `json:"id" gorm:"primary_key"`
+	UUID         string     `json:"uuid"`
+	FirstName    string     `json:"first_name"`
+	LastName     string     `json:"last_name"`
+	EmailAddress string     `json:"email_address" gorm:"not null;unique"`
+	City         string     `json:"city"`
+	Postcode     string     `json:"postcode"`
+	Address      string     `json:"address"`
+	PhoneNumber  string     `json:"phone_number"`
+	Companies    []Company  `json:"companies" gorm:"many2many:company_clients;"`
+	Domains      Domains    `json:"domains"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	DeletedAt    *time.Time `json:"deleted_at" sql:"index"`
 }
 
 type Domain struct {
-	gorm.Model
-	UUID     uuid.UUID `json:"id"`
-	Name     string    `json:"name"`
-	Provider string    `json:"provider"`
+	ID        uint       `json:"id" gorm:"primary_key"`
+	UUID      string     `json:"uuid"`
+	Name      string     `json:"name"`
+	Provider  string     `json:"provider"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
 }
 
 type Domains []Domain
 
 type DomainProvider struct {
-	UUID uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	ID        uint       `json:"id" gorm:"primary_key"`
+	UUID      string     `json:"uuid"`
+	Name      string     `json:"name"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at" sql:"index"`
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	uuid "github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
@@ -31,6 +32,10 @@ func GetClients(w http.ResponseWriter, r *http.Request) {
 
 	var clients []models.Client
 	db.Find(&clients)
+	for i, _ := range clients {
+		log.Println(&clients[i].Companies)
+		db.Model(clients[i]).Related(&clients[i].Companies, "Companies")
+	}
 
 	json.NewEncoder(w).Encode(clients)
 }
@@ -49,11 +54,13 @@ func PostClient(w http.ResponseWriter, r *http.Request) {
 
 	var company models.Company
 	db.FirstOrCreate(&company, models.Company{
+		UUID:      uuid.New().String(),
 		Name:      companyName,
 		KvkNumber: kvkNumber,
 	})
 
 	client := models.Client{
+		UUID:         uuid.New().String(),
 		FirstName:    firstName,
 		LastName:     lastName,
 		EmailAddress: emailAddress,

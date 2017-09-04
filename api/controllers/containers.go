@@ -56,7 +56,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	domain := models.Domain{
-		UUID:     uuid.New(),
+		UUID:     uuid.New().String(),
 		Name:     domainName,
 		Provider: "k8s-dev",
 	}

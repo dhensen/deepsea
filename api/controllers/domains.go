@@ -28,5 +28,5 @@ func BuyDomain(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Buying domainName %s via domainProvider %s", domainName, domainProvider)
 
 	// Fake it 'till you make it!
-	json.NewEncoder(w).Encode(models.Domain{UUID: uuid.New(), Name: domainName, Provider: domainProvider})
+	json.NewEncoder(w).Encode(models.Domain{UUID: uuid.New().String(), Name: domainName, Provider: domainProvider})
 }

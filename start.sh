@@ -18,6 +18,8 @@ if [[ ! $(docker container ls --format {{.Names}} | grep $MYSQL_NODE_NAME) ]]; t
         mysql:$MYSQL_VERSION
 fi
 
+sleep 1
+
 mysql -uroot -h127.0.0.1 -P3307 -pdeepsea -e "CREATE DATABASE IF NOT EXISTS test_deepsea;"
 
 ./build/deepsea-api -kubeconfig ~/.kube/config
