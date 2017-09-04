@@ -34,14 +34,12 @@ func main() {
 
 	// Login
 	s := r.PathPrefix("/login").Subrouter()
-	// s.Methods("OPTIONS").HandlerFunc(CorsHandler)
 	s.Methods("GET").HandlerFunc(Login)
 	s.Methods("POST").HandlerFunc(LoginHandler)
 	r.HandleFunc("/logout", Logout)
 
 	// Client endpoints
 	s = r.PathPrefix("/clients").Subrouter()
-	// s.Methods("OPTIONS").HandlerFunc(CorsHandler)
 	s.Methods("GET").HandlerFunc(GetClients)
 	s.Methods("POST").HandlerFunc(PostClient)
 	s.Methods("DELETE").HandlerFunc(DeleteClient)
