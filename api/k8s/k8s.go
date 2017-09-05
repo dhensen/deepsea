@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"flag"
+	"time"
 
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
@@ -23,6 +24,8 @@ func init() {
 		panic(err)
 	}
 
+	// set the http client timeout to half a second
+	config.Timeout = 500 * time.Millisecond
 	K8SDiscoveryClient, err = discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		panic(err)
