@@ -16,6 +16,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", Index)
+	r.HandleFunc("/health", controllers.Health)
 
 	dir := "static"
 	// This will serve files under /static/<filename>

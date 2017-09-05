@@ -2,40 +2,21 @@ package controllers
 
 import (
 	"encoding/json"
+	. "local/deepsea/api/db"
 	"local/deepsea/api/models"
 	"log"
 	"net/http"
 
 	uuid "github.com/google/uuid"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-var db *gorm.DB
-
-func init() {
-	db = getDB()
-	db.AutoMigrate(&models.Client{}, &models.Company{})
-}
-
-func getDB() *gorm.DB {
-	db, err := gorm.Open("mysql", "root:deepsea@tcp(localhost:3307)/test_deepsea?charset=utf8&parseTime=True&loc=Local")
-	if err != nil {
-		panic(err)
-	}
-	return db
-}
-
 func GetClients(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	var clients []models.Client
-	db.Find(&clients)
-	for i, _ := range clients {
-		log.Println(&clients[i].Companies)
-		db.Model(clients[i]).Related(&clients[i].Companies, "Companies")
-	}
+	DB.Find(&clients)
+	DB.Preload("Companies").Preload("Domains").Find(&clients)
+	log.Println(clients)
 
 	json.NewEncoder(w).Encode(clients)
 }
@@ -53,7 +34,7 @@ func PostClient(w http.ResponseWriter, r *http.Request) {
 	kvkNumber := r.PostFormValue("kvkNumber")
 
 	var company models.Company
-	db.FirstOrCreate(&company, models.Company{
+	DB.FirstOrCreate(&company, models.Company{
 		UUID:      uuid.New().String(),
 		Name:      companyName,
 		KvkNumber: kvkNumber,
@@ -71,9 +52,9 @@ func PostClient(w http.ResponseWriter, r *http.Request) {
 		Companies:    []models.Company{company},
 	}
 
-	db.Create(&client)
+	DB.Create(&client)
 
-	errors := db.GetErrors()
+	errors := DB.GetErrors()
 	if len(errors) > 0 {
 		log.Println(errors)
 		w.WriteHeader(http.StatusBadRequest)

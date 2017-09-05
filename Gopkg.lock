@@ -135,6 +135,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/gorilla/schema"
+  packages = ["."]
+  revision = "8b1100835db5bbdae88541510f70d114b91a7e4d"
+
+[[projects]]
+  branch = "master"
   name = "github.com/howeyc/gopass"
   packages = ["."]
   revision = "bf9dde6d0d2c004a008c27aaee91170c786f6db8"
@@ -238,6 +244,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "035708267edb7c901ec5eb9340c5b4bdd4936c10d7fceb8d9caf6e4460362d54"
+  inputs-digest = "992d1d1d8adc7ff95cee308aafba07c15beb30682fdf5d675270a6ded5ef7dae"
   solver-name = "gps-cdcl"
   solver-version = 1

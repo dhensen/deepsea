@@ -1,8 +1,13 @@
 package models
 
 import (
+	. "local/deepsea/api/db"
 	"time"
 )
+
+func init() {
+	DB.AutoMigrate(&Client{}, &Company{}, &Domain{})
+}
 
 type User struct {
 	ID         uint       `json:"id" gorm:"primary_key"`
@@ -37,7 +42,7 @@ type Client struct {
 	Address      string     `json:"address"`
 	PhoneNumber  string     `json:"phone_number"`
 	Companies    []Company  `json:"companies" gorm:"many2many:company_clients;"`
-	Domains      Domains    `json:"domains"`
+	Domains      []Domain   `json:"domains"`
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
 	DeletedAt    *time.Time `json:"deleted_at" sql:"index"`
@@ -45,6 +50,7 @@ type Client struct {
 
 type Domain struct {
 	ID        uint       `json:"id" gorm:"primary_key"`
+	ClientID  uint       `json:"client_id"`
 	UUID      string     `json:"uuid"`
 	Name      string     `json:"name"`
 	Provider  string     `json:"provider"`
