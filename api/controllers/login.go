@@ -37,7 +37,7 @@ func CookieExtractor(jwtKey string) jwtmiddleware.TokenExtractor {
 	}
 }
 
-func Authenticated(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+func JWTAuth(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		jwtMiddleware := getJWTMiddleware()
 		err := jwtMiddleware.CheckJWT(w, r)

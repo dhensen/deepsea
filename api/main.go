@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"local/deepsea/api/controllers"
+	c "local/deepsea/api/controllers"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -16,7 +16,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", Index)
-	r.HandleFunc("/health", controllers.Health)
+	r.HandleFunc("/health", c.Health)
 
 	dir := "static"
 	// This will serve files under /static/<filename>
@@ -24,33 +24,36 @@ func main() {
 
 	// Login
 	s := r.PathPrefix("/login").Subrouter()
-	s.Methods("POST").HandlerFunc(controllers.LoginHandler)
-	r.HandleFunc("/logout", controllers.Logout)
+	s.Methods("POST").HandlerFunc(c.LoginHandler)
+	r.HandleFunc("/logout", c.Logout)
+
+	// authentication handler checks for a JWT token
+	auth := c.JWTAuth
 
 	// Client endpoints
 	s = r.PathPrefix("/clients").Subrouter()
-	s.Methods("GET").HandlerFunc(controllers.Authenticated(controllers.GetClients))
-	s.Methods("POST").HandlerFunc(controllers.Authenticated(controllers.PostClient))
-	s.Methods("DELETE").HandlerFunc(controllers.Authenticated(controllers.DeleteClient))
-	s.Methods("PUT").HandlerFunc(controllers.Authenticated(controllers.PutClient))
+	s.Methods("GET").HandlerFunc(auth(c.GetClients))
+	s.Methods("POST").HandlerFunc(auth(c.PostClient))
+	s.Methods("DELETE").HandlerFunc(auth(c.DeleteClient))
+	s.Methods("PUT").HandlerFunc(auth(c.PutClient))
 
 	// Domain endpoints
 	s = r.PathPrefix("/domains").Subrouter()
-	s.Methods("GET").HandlerFunc(controllers.Authenticated(controllers.ListDomains))
-	s.Methods("POST").HandlerFunc(controllers.Authenticated(controllers.BuyDomain))
+	s.Methods("GET").HandlerFunc(auth(c.ListDomains))
+	s.Methods("POST").HandlerFunc(auth(c.BuyDomain))
 
 	// List container presets
-	r.HandleFunc("/container-presets", controllers.Authenticated(controllers.ListContainerPresets)).Methods("GET")
+	r.HandleFunc("/container-presets", auth(c.ListContainerPresets)).Methods("GET")
 
 	// Container endpoints
 	s = r.PathPrefix("/containers").Subrouter()
-	s.Methods("POST").HandlerFunc(controllers.Authenticated(controllers.AddContainer))
-	s.Methods("GET").HandlerFunc(controllers.Authenticated(controllers.ListContainers))
+	s.Methods("POST").HandlerFunc(auth(c.AddContainer))
+	s.Methods("GET").HandlerFunc(auth(c.ListContainers))
 
 	// Backups
 	s = r.PathPrefix("/backups/{id:[0-9]+}").Subrouter()
-	s.Methods("GET").HandlerFunc(controllers.Authenticated(controllers.ListBackups))
-	s.Methods("POST").HandlerFunc(controllers.Authenticated(controllers.CreateBackup))
+	s.Methods("GET").HandlerFunc(auth(c.ListBackups))
+	s.Methods("POST").HandlerFunc(auth(c.CreateBackup))
 
 	var apiPort int64 = 8080
 	if value, exists := os.LookupEnv("PORT"); exists {
