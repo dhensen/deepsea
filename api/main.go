@@ -15,12 +15,10 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/", Index)
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	r.HandleFunc("/health", c.Health)
-
-	dir := "static"
-	// This will serve files under /static/<filename>
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(dir))))
 
 	// Login
 	s := r.PathPrefix("/login").Subrouter()
@@ -61,9 +59,4 @@ func main() {
 	}
 	log.Println(fmt.Sprintf("Starting server on port %d", apiPort))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", apiPort), handlers.CORS()(r)))
-}
-
-// Home "/" handler
-func Index(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 }
