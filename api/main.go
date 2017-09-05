@@ -29,10 +29,10 @@ func main() {
 
 	// Client endpoints
 	s = r.PathPrefix("/clients").Subrouter()
-	s.Methods("GET").HandlerFunc(controllers.GetClients)
-	s.Methods("POST").HandlerFunc(controllers.PostClient)
-	s.Methods("DELETE").HandlerFunc(controllers.DeleteClient)
-	s.Methods("PUT").HandlerFunc(controllers.PutClient)
+	s.Methods("GET").HandlerFunc(controllers.Authenticated(controllers.GetClients))
+	s.Methods("POST").HandlerFunc(controllers.Authenticated(controllers.PostClient))
+	s.Methods("DELETE").HandlerFunc(controllers.Authenticated(controllers.DeleteClient))
+	s.Methods("PUT").HandlerFunc(controllers.Authenticated(controllers.PutClient))
 
 	// Domain endpoints
 	s = r.PathPrefix("/domains").Subrouter()
