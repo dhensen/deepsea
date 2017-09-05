@@ -32,8 +32,10 @@ func Health(w http.ResponseWriter, r *http.Request) {
 	var status string
 	if isHealthy {
 		status = HEALTH_OK
+		w.WriteHeader(http.StatusOK)
 	} else {
 		status = HEALTH_NOT_OK
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
