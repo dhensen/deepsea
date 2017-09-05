@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
+	"local/deepsea/api/k8s"
 	"local/deepsea/api/models"
 	"log"
 	"net/http"
@@ -17,19 +17,7 @@ import (
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
-	kubernetes "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
-
-var kubeconfig *string
-
-func init() {
-	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	flag.Parse()
-	if *kubeconfig == "" {
-		panic("-kubeconfig not specified")
-	}
-}
 
 func ListContainers(w http.ResponseWriter, r *http.Request) {
 
@@ -70,17 +58,15 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	// 3. .spec.template.spec.containers.name
 	// TODO: properly differentiate these three vars
 
-	clientset := getClientSet()
-
 	persistentVolume := CreatePersistentVolume(dnsLabel)
-	volumeClient := clientset.CoreV1().PersistentVolumes()
+	volumeClient := k8s.K8SClientSet.CoreV1().PersistentVolumes()
 	_, err := volumeClient.Create(persistentVolume)
 	if err != nil {
 		panic(err)
 	}
 
 	persistentVolumeClaim := CreatePersistentVolumeClaim(dnsLabel)
-	volumeClaimClient := clientset.CoreV1().PersistentVolumeClaims(apiv1.NamespaceDefault)
+	volumeClaimClient := k8s.K8SClientSet.CoreV1().PersistentVolumeClaims(apiv1.NamespaceDefault)
 	_, err = volumeClaimClient.Create(persistentVolumeClaim)
 	if err != nil {
 		panic(err)
@@ -88,7 +74,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 
 	deployment := CreateDeployment(imagePreset.Image, dnsLabel, dnsLabel, dnsLabel, dnsLabel)
 
-	deploymentsClient := clientset.AppsV1beta1().Deployments(apiv1.NamespaceDefault)
+	deploymentsClient := k8s.K8SClientSet.AppsV1beta1().Deployments(apiv1.NamespaceDefault)
 
 	log.Println("Creating deployment...")
 	_, err = deploymentsClient.Create(deployment)
@@ -98,7 +84,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	log.Println("Deployment created succesfully!")
 
 	service := CreateService(dnsLabel, dnsLabel)
-	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
+	serviceClient := k8s.K8SClientSet.CoreV1().Services(apiv1.NamespaceDefault)
 	log.Println("Creating Service...")
 	_, err = serviceClient.Create(service)
 	if err != nil {
@@ -107,7 +93,7 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	log.Println("Service created succesfully!")
 
 	ingress := CreateIngress(dnsLabel, domainName, dnsLabel)
-	ingressClient := clientset.ExtensionsV1beta1().Ingresses(apiv1.NamespaceDefault)
+	ingressClient := k8s.K8SClientSet.ExtensionsV1beta1().Ingresses(apiv1.NamespaceDefault)
 	log.Println("Creating Ingress...")
 	_, err = ingressClient.Create(ingress)
 	if err != nil {
@@ -116,18 +102,6 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 	log.Println("Ingress created succesfully!")
 
 	json.NewEncoder(w).Encode(domain)
-}
-
-func getClientSet() *kubernetes.Clientset {
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		panic(err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-	return clientset
 }
 
 func int32Ptr(i int32) *int32 { return &i }
