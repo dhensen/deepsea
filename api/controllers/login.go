@@ -20,7 +20,10 @@ func getJWTMiddleware() *jwtmiddleware.JWTMiddleware {
 			return []byte(jwtSecret), nil
 		},
 		SigningMethod: jwt.SigningMethodHS256,
-		Extractor:     CookieExtractor(jwtCookieKey),
+		Extractor: jwtmiddleware.FromFirst(
+			jwtmiddleware.FromAuthHeader,
+			CookieExtractor(jwtCookieKey),
+		),
 	})
 }
 
