@@ -58,9 +58,23 @@ spec:
           value: "3306"
         - name: MYSQL_DATABASE
           value: "test_deepsea"
-        image: deepsea:latest
+        image: localhost:5000/deepsea:1504827074
+        imagePullPolicy: IfNotPresent
         name: deepsea
         ports:
         - containerPort: 8080
         resources: {}
-status: {}
+        volumeMounts:
+        - mountPath: /data/volumes
+          name: master
+      initContainers:
+      - name: init-db
+        image: mysql:5.7.19
+        env:
+        - name: MYSQL_PWD
+          value: "root"
+        command: ['sh', '-c', 'env && mysql -uroot -h$MYSQL_1_SERVICE_HOST -e "CREATE DATABASE IF NOT EXISTS test_deepsea;"']
+      volumes:
+      - name: master
+        hostPath:
+          path: /data/volumes
