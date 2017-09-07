@@ -106,17 +106,22 @@ func AddContainer(w http.ResponseWriter, r *http.Request) {
 
 func int32Ptr(i int32) *int32 { return &i }
 
-func CreatePersistentVolume(volumeName string) *apiv1.PersistentVolume {
-	hostPath := fmt.Sprintf("/data/volumes/%s", volumeName)
+func CreateDirectory(path string) ([]byte, error) {
 
 	// Call mkdir hostPath via ssh in minikube
-	cmd := exec.Command("/usr/local/bin/minikube", "ssh", fmt.Sprintf("mkdir -pv %s", hostPath))
+	// cmd := exec.Command("/usr/local/bin/minikube", "ssh", fmt.Sprintf("mkdir -pv %s", path))
+	cmd := exec.Command("mkdir", "-pv", path)
 	out, err := cmd.Output()
-	if err != nil {
-		panic(err)
+	return out, err
+}
+
+func CreatePersistentVolume(volumeName string) *apiv1.PersistentVolume {
+	hostPath := fmt.Sprintf("/data/volumes/%s", volumeName)
+	if out, err := CreateDirectory(hostPath); err != nil {
+		log.Println(out)
+		log.Panicln(err)
+		// TODO: handle failure
 	}
-	log.Printf("%s", out)
-	// TODO: handle failure
 
 	return &apiv1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
