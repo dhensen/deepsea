@@ -1,1 +1,1 @@
-- [ ] Give mysql container data persistence
+- [x] Give mysql container data persistence
