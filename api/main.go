@@ -58,5 +58,5 @@ func main() {
 		apiPort, _ = strconv.ParseInt(value, 10, 0)
 	}
 	log.Println(fmt.Sprintf("Starting server on port %d", apiPort))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", apiPort), handlers.CORS()(r)))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", apiPort), handlers.CORS(handlers.AllowCredentials())(r)))
 }
