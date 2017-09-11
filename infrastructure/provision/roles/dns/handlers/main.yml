@@ -1,0 +1,8 @@
+---
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+
+- name: update resolver
+  command: /usr/bin/resolvconf -u

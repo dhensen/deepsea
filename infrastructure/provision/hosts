@@ -1,0 +1,3 @@
+[workstations]
+liekaliek.local ansible_user=dino
+# emilia.local
