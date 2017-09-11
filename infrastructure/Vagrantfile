@@ -1,0 +1,30 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "ubuntu/xenial64"
+  config.vm.box_check_update = false
+  config.ssh.insert_key = true
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 1
+    vb.memory = "1024"
+  end
+
+  config.vm.define "node-1", primary: true do |master|
+    master.vm.hostname = "node-1"
+    master.vm.network "private_network", ip: "192.168.35.10"
+  end
+
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.verbose = "vvvv"
+    ansible.playbook = "provision/site.yml"
+    ansible.groups = {
+      "kubernetes" => ["node-1"],
+      "master" => ["node-1"],
+      "worker" => []
+    }
+  end
+end

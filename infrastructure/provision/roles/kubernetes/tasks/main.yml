@@ -1,0 +1,33 @@
+---
+- name: install kubectl
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/linux/amd64/kubectl
+    checksum: sha256:0392ed74bc29137b2a7db7aca9a0a0c1bc85c4cd55b6a42ea556e1a7c485f745
+    dest: /usr/local/bin/kubectl
+    mode: o+x,g+x,u+x
+
+
+- name: add apt-key for for kubernetes repository required to install kubelet and kubeadm
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: add the kubernetes sources list
+  copy:
+    src: kubernetes.list
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: install kubelet and kubeadm
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: present
+  with_items:
+    - kubelet
+    - kubeadm
+  notify:
+  - enable kubelet
+  - start kubelet

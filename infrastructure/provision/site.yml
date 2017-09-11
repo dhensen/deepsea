@@ -1,6 +1,28 @@
 ---
-- hosts: workstations
-  become: yes
+- hosts: all
+  become: true
+  gather_facts: no
+  pre_tasks:
+    - name: 'install python2'
+      raw: sudo apt-get update && sudo apt-get -y install python-simplejson
 
+- name: Install pycurl
+  hosts: docker
+  gather_facts: no
+  tasks:
+    - name: Install pycurl
+      apt: package={{ item }} state=present update_cache=yes cache_valid_time=600
+      become: yes
+      with_items:
+        - python
+        - vim
+        - python-pycurl
+
+- hosts: kubernetes
+  become: true
   roles:
-    - dns
+    - common
+    - role: angstwad.docker_ubuntu
+      docker_group_members:
+        - ubuntu
+    - kubernetes
