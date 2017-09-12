@@ -1,3 +1,0 @@
----
-- name: kubeadm join
-  shell: kubeadm join --token {{ hostvars['node-1']['kube_token'] }} 192.168.35.10:6443

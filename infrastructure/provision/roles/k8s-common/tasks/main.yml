@@ -31,3 +31,55 @@
   notify:
   - enable kubelet
   - start kubelet
+
+- name: kubeadm init
+  shell: kubeadm init --skip-preflight-checks --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.35.10
+  when: inventory_hostname == "node-1"
+
+- name: mkdir .kube dir
+  file:
+    path: /home/ubuntu/.kube/
+    state: directory
+  when: inventory_hostname == "node-1"
+
+- name: copy kubeconfig
+  copy:
+    remote_src: yes
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+  when: inventory_hostname == "node-1"
+
+- name: install a pod network (Flanel in this case)
+  shell: |
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml \
+    && kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel-rbac.yml
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+  when: inventory_hostname == "node-1"
+
+- name: Get the node token values
+  shell: kubeadm token list | tail -n 1 | awk '{print $1}'
+  register: token
+  delegate_to: "{{ groups['k8s-master'][0] }}"
+  when: inventory_hostname != "node-1"
+
+- name: Set token facts
+  set_fact:
+    kube_join_token: "{{ token.stdout }}"
+  when: inventory_hostname != "node-1"
+
+# - name: register token
+#   shell: kubeadm token list | tail -n 1 | awk '{print $1}'
+#   register: kube_token
+#   when: inventory_hostname == "node-1"
+
+# - name: set token fact
+#   set_fact:
+#     kube_token: "{{ kube_token['stdout'] }}"
+#   when: inventory_hostname == "node-1"
+
+- name: kubeadm join
+  shell: kubeadm join --token {{ kube_join_token }} 192.168.35.10:6443
+  when: inventory_hostname != "node-1"
