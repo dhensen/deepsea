@@ -1,0 +1,6 @@
+---
+- name: ensure user can run docker commands
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes

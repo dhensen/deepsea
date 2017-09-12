@@ -6,23 +6,25 @@
     - name: 'install python2'
       raw: sudo apt-get update && sudo apt-get -y install python-simplejson
 
-- name: Install pycurl
-  hosts: docker
-  gather_facts: no
-  tasks:
-    - name: Install pycurl
-      apt: package={{ item }} state=present update_cache=yes cache_valid_time=600
-      become: yes
-      with_items:
-        - python
-        - vim
-        - python-pycurl
-
 - hosts: kubernetes
   become: true
   roles:
     - common
-    - role: angstwad.docker_ubuntu
-      docker_group_members:
-        - ubuntu
-    - kubernetes
+    # - role: angstwad.docker_ubuntu
+    #   docker_group_members:
+    #     - ubuntu
+    - role: mongrelion.docker
+      docker_version: 1.12.6
+      setup_script_md5_sum: 72a8d7aab1b637fdbb8de81781381492
+    - docker
+    - k8s-common
+
+- hosts: k8s-master
+  become: true
+  roles:
+    - k8s-master
+
+- hosts: k8s-worker
+  become: true
+  roles:
+    - k8s-worker
