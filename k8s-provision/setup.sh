@@ -53,4 +53,4 @@ done
 
 docker push 192.168.99.100:5000/deepsea:v1
 
-kubectl create -f $PWD/../deepsea.yaml
+kubectl create -f $PWD/deepsea.yaml
