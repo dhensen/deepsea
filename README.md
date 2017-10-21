@@ -15,7 +15,7 @@ On top of Kubernetes there will be done some provisioning:
 - Kube Lego
 - MySQL (I could also do this at Pod level, or optional depending on customers requirements)
 - Deepsea
-- Docker Registry
+- Docker Registry (Minikube only)
 - Secrets and ConfigMaps for above programs
 
 Configure which Kubernetes cluster to use and provision using terraform/ansible/???
