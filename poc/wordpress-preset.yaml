@@ -41,6 +41,7 @@ spec:
           value: root
         - name: WORDPRESS_DB_PASSWORD
           value: root
+        # dont use this preset on production
         image: wordpress:4.8.1-php5.6-apache
         name: wordpress-1
         ports:
